@@ -1,0 +1,26 @@
+node_modules/
+.yarn/*
+!.yarn/patches
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+.pnp.*
+playwright-report/
+test-results/
+allure-results/
+allure-report/
+reports/
+blob-report/
+.env
+.env.local
+.DS_Store
+Thumbs.db
+*.log
+
+# Visual baselines are Chromium on Linux, generated in the image CI runs.
+# A baseline written by a local Windows or macOS run would be compared against
+# on that platform only, so it would sit in the repository proving nothing while
+# looking like coverage. Generate them with `yarn docker:vr:update`.
+vr-tests/__screenshots__/**/*-win32.png
+vr-tests/__screenshots__/**/*-darwin.png

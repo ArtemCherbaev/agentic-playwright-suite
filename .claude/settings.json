@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(yarn test:*)",
+      "Bash(yarn playwright:*)",
+      "Bash(yarn lint:*)",
+      "Bash(yarn typecheck)",
+      "Bash(yarn format:*)",
+      "Bash(yarn metrics)",
+      "Bash(npx playwright test:*)",
+      "Bash(npx playwright show-trace:*)",
+      "Bash(git status)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Read(//c/_Files/Claude/agentic-playwright-suite/**)",
+      "mcp__playwright__*"
+    ],
+    "deny": [
+      "Bash(git push:*)",
+      "Bash(yarn test:vr:update)",
+      "Bash(docker compose run --rm runner yarn test:vr:update)"
+    ]
+  },
+  "enableAllProjectMcpServers": true
+}

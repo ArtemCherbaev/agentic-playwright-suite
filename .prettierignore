@@ -1,0 +1,9 @@
+node_modules/
+.yarn/
+allure-report/
+allure-results/
+playwright-report/
+test-results/
+reports/
+yarn.lock
+**/*-snapshots/

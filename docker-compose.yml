@@ -1,0 +1,34 @@
+# Local use of the image CI runs.
+#
+#   yarn docker:vr          the visual suite, against committed Linux baselines
+#   yarn docker:vr:update   regenerate those baselines
+#   yarn docker:e2e         the functional suite
+#
+# The bind mount is what makes this worth having: the container runs the code in
+# the working tree, and writes its baselines and reports back into it.
+
+services:
+  runner:
+    build:
+      context: .
+      dockerfile: env/docker/Dockerfile
+    image: agentic-playwright-suite:local
+    working_dir: /suite
+    # The demo target is a third party host. Sharing the developer's network
+    # means a run from a laptop and a run from CI reach it the same way.
+    network_mode: bridge
+    ipc: host
+    environment:
+      CI: 'true'
+      BASE_URL: ${BASE_URL:-https://automationexercise.com}
+      PW_WORKERS: ${PW_WORKERS:-1}
+    volumes:
+      - ./tests:/suite/tests
+      - ./vr-tests:/suite/vr-tests
+      - ./utils:/suite/utils
+      - ./specs:/suite/specs
+      - ./playwright.config.ts:/suite/playwright.config.ts
+      - ./playwright-report:/suite/playwright-report
+      - ./test-results:/suite/test-results
+      - ./allure-results:/suite/allure-results
+      - ./reports:/suite/reports
