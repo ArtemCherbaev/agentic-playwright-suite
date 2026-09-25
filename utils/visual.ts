@@ -133,6 +133,20 @@ export async function readyForCapture(page: Page): Promise<void> {
       }
     `,
   });
+  // Some of the advertiser's widgets defeat the collapse above. Google's in-text
+  // search chips (.google-anno-sc) carry an inline style that resets every
+  // property with !important, which outranks any stylesheet, so the second CI
+  // baseline run photographed one inside the carousel's paragraph and the next
+  // run did not: VR-02, 11,013 pixels, the buttons pushed down a line. Those
+  // are removed from the document instead, now and whenever another arrives,
+  // so a chip injected a second before the capture cannot move the layout.
+  await page.evaluate(() => {
+    const widgets = '.google-anno-sc, .google-anno-skip, .google-auto-placed';
+    const sweep = () => document.querySelectorAll(widgets).forEach((node) => node.remove());
+    sweep();
+    new MutationObserver(sweep).observe(document.body, { childList: true, subtree: true });
+  });
+
   await imagesSettled(page);
 
   // Wait for the fonts before anything with text in it is captured.
