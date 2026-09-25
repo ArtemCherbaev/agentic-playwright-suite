@@ -4,31 +4,24 @@
 #   yarn docker:vr:update   regenerate those baselines
 #   yarn docker:e2e         the functional suite
 #
-# The bind mount is what makes this worth having: the container runs the code in
-# the working tree, and writes its baselines and reports back into it.
+# The working tree is mounted over /suite, so the container runs the code in
+# front of you and writes its baselines and reports back into it. The anonymous
+# volume keeps the image's Linux node_modules from being shadowed by the host's.
 
 services:
   runner:
     build:
       context: .
       dockerfile: env/docker/Dockerfile
+      args:
+        PLAYWRIGHT_VERSION: 1.63.0
     image: agentic-playwright-suite:local
     working_dir: /suite
-    # The demo target is a third party host. Sharing the developer's network
-    # means a run from a laptop and a run from CI reach it the same way.
-    network_mode: bridge
     ipc: host
     environment:
       CI: 'true'
       BASE_URL: ${BASE_URL:-https://automationexercise.com}
       PW_WORKERS: ${PW_WORKERS:-1}
     volumes:
-      - ./tests:/suite/tests
-      - ./vr-tests:/suite/vr-tests
-      - ./utils:/suite/utils
-      - ./specs:/suite/specs
-      - ./playwright.config.ts:/suite/playwright.config.ts
-      - ./playwright-report:/suite/playwright-report
-      - ./test-results:/suite/test-results
-      - ./allure-results:/suite/allure-results
-      - ./reports:/suite/reports
+      - .:/suite
+      - /suite/node_modules

@@ -1,33 +1,42 @@
-# The execution image.
+# The execution image: the operating system, the browsers and node_modules.
 #
-# Every CI job runs inside this image, and `yarn docker:vr` runs the visual
-# suite in it locally. That is the whole point of it: visual baselines are
-# Chromium on Linux, and a baseline generated anywhere else is compared against
-# on that platform only, so it sits in the repository looking like coverage
-# while proving nothing.
+# It carries the environment and nothing else. CI checks out the commit under
+# test and points at this image's node_modules, and `docker compose` mounts the
+# working tree over /suite, so the code a job runs is always the code in front
+# of it rather than whatever was copied in when the image was last built.
 #
-# The base image is pinned to a Playwright release rather than to `latest`. The
-# browser build and the client library have to agree, and a floating base image
-# means a green pipeline can turn red on a morning when nothing in this
-# repository changed.
-FROM mcr.microsoft.com/playwright:v1.49.0-noble
+# The Playwright version is not written here. The image job reads it from
+# package.json and passes it in, so the base image and the client library
+# cannot drift apart: the browser build a baseline was captured with is the one
+# the library drives. A drift would change text rendering and quietly
+# invalidate every visual baseline.
+ARG PLAYWRIGHT_VERSION
+FROM mcr.microsoft.com/playwright:v${PLAYWRIGHT_VERSION}-noble
 
+ARG PLAYWRIGHT_VERSION
+
+# Corepack keeps the Yarn it downloads under COREPACK_HOME. Container jobs run
+# with a different HOME than the build did, so the location is fixed here or
+# every job would download Yarn again.
 ENV CI=true \
     NODE_ENV=test \
+    COREPACK_HOME=/opt/corepack \
+    COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
     YARN_ENABLE_IMMUTABLE_INSTALLS=true
+
+# git, so a job running inside the image can commit (the baseline workflow does).
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends git \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /suite
 
-# Dependencies are installed as their own layer, from the lockfile alone, so a
-# change to a test file does not reinstall node_modules.
 COPY package.json yarn.lock .yarnrc.yml ./
 RUN corepack enable && yarn install --immutable
 
-COPY . .
-
-# The browsers are already in the base image. This only verifies that the
-# version the lockfile asks for is the version the image carries, and fails the
-# build rather than the suite if they have drifted apart.
-RUN yarn playwright --version
-
-CMD ["yarn", "test:e2e"]
+# Fail the build rather than the suite if the lockfile and the base image
+# disagree about the Playwright release.
+RUN installed="$(node -p "require('@playwright/test/package.json').version")" \
+    && if [ "$installed" != "$PLAYWRIGHT_VERSION" ]; then \
+         echo "lockfile resolves @playwright/test $installed, image is v$PLAYWRIGHT_VERSION" >&2; exit 1; \
+       fi

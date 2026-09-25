@@ -6,112 +6,66 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
-    inputs:
-      update_baselines:
-        description: 'Regenerate the visual baselines and upload them for review'
-        type: boolean
-        default: false
 
+# A newer push to a pull request replaces its older run. On main every run
+# finishes, because every run on main is one somebody may want the report of.
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
 
 env:
-  IMAGE: ghcr.io/${{ github.repository }}/runner
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  # ---------------------------------------------------------------------------
-  # The image every other job runs inside. Built once, so the browsers and the
-  # dependencies are installed once rather than four times.
-  # ---------------------------------------------------------------------------
   image:
-    name: Execution image
-    runs-on: ubuntu-latest
+    uses: ./.github/workflows/image.yml
     permissions:
       contents: read
       packages: write
-    outputs:
-      tag: ${{ steps.meta.outputs.tag }}
-    steps:
-      - uses: actions/checkout@v4
 
-      - id: meta
-        run: echo "tag=${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
-
-      - uses: docker/setup-buildx-action@v3
-
-      - uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: env/docker/Dockerfile
-          push: true
-          tags: |
-            ${{ env.IMAGE }}:${{ steps.meta.outputs.tag }}
-            ${{ env.IMAGE }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
+  # ---------------------------------------------------------------------------
+  # Every job below runs inside the image, on the commit under test. The image
+  # carries node_modules at /suite; the checkout lands in the workspace, so each
+  # job points at the image's dependencies instead of installing them again.
   # ---------------------------------------------------------------------------
   static:
     name: Static checks
     needs: image
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: read
     container:
-      image: ghcr.io/${{ github.repository }}/runner:${{ needs.image.outputs.tag }}
+      image: ${{ needs.image.outputs.image }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Point at the image's dependencies
+        run: |
+          ln -s /suite/node_modules node_modules
+          mkdir -p .yarn && ln -s /suite/.yarn/install-state.gz .yarn/install-state.gz
       - run: yarn check
 
-  # ---------------------------------------------------------------------------
-  # Three test jobs against one shared demo host, each capped at a small worker
-  # budget. The cap is a precaution rather than a measured limit: the host's
-  # capacity varies, and the budget costs nothing while removing the suite as a
-  # suspect when something times out.
-  # ---------------------------------------------------------------------------
+  # Four test jobs against one shared demo host, each on a small worker budget.
+  # The budget is a precaution rather than a measured limit: the host's
+  # capacity varies, and a cap takes the suite off the list of suspects when a
+  # run times out.
   functional:
     name: Functional (Chromium)
     needs: image
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: read
     container:
-      image: ghcr.io/${{ github.repository }}/runner:${{ needs.image.outputs.tag }}
-      credentials:
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-      options: --ipc=host
-    env:
-      PW_WORKERS: 1
-    steps:
-      - uses: actions/checkout@v4
-      - run: yarn test:e2e
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: results-functional
-          path: |
-            allure-results/
-            playwright-report/
-            test-results/
-            reports/
-          retention-days: 14
-
-  webkit:
-    name: Functional (WebKit)
-    needs: image
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/${{ github.repository }}/runner:${{ needs.image.outputs.tag }}
+      image: ${{ needs.image.outputs.image }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -119,23 +73,66 @@ jobs:
     env:
       PW_WORKERS: 2
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Point at the image's dependencies
+        run: |
+          ln -s /suite/node_modules node_modules
+          mkdir -p .yarn && ln -s /suite/.yarn/install-state.gz .yarn/install-state.gz
+      - run: yarn test:e2e
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: results-functional
+          path: |
+            allure-results/
+            reports/
+            playwright-report/
+            test-results/
+          retention-days: 14
+
+  webkit:
+    name: Functional (WebKit)
+    needs: image
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: read
+    container:
+      image: ${{ needs.image.outputs.image }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+      options: --ipc=host
+    env:
+      PW_WORKERS: 2
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Point at the image's dependencies
+        run: |
+          ln -s /suite/node_modules node_modules
+          mkdir -p .yarn && ln -s /suite/.yarn/install-state.gz .yarn/install-state.gz
       - run: yarn test:e2e:webkit
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: results-webkit
           path: |
             allure-results/
             reports/
+            test-results/
           retention-days: 14
 
   visual:
     name: Visual regression
     needs: image
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: read
     container:
-      image: ghcr.io/${{ github.repository }}/runner:${{ needs.image.outputs.tag }}
+      image: ${{ needs.image.outputs.image }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -143,142 +140,206 @@ jobs:
     env:
       PW_WORKERS: 1
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Run the visual suite
-        if: ${{ github.event.inputs.update_baselines != 'true' }}
-        run: yarn test:vr
-
-      # Regenerating and then immediately verifying, because a baseline is only
-      # worth having if it reproduces. The first set this suite generated
-      # contained two captures taken before the web fonts had painted: they
-      # disagreed with every run afterwards, and looked like a regression in the
-      # application rather than a mistake in the baseline.
-      - name: Regenerate the baselines and verify they reproduce
-        if: ${{ github.event.inputs.update_baselines == 'true' }}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Point at the image's dependencies
         run: |
-          yarn test:vr:update
-          yarn test:vr
-
-      - name: Upload the regenerated baselines for review
-        if: ${{ github.event.inputs.update_baselines == 'true' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: visual-baselines
-          path: vr-tests/__screenshots__/
-          retention-days: 14
-
-      - uses: actions/upload-artifact@v4
+          ln -s /suite/node_modules node_modules
+          mkdir -p .yarn && ln -s /suite/.yarn/install-state.gz .yarn/install-state.gz
+      - run: yarn test:vr
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: results-visual
           path: |
             allure-results/
+            reports/
             test-results/
+          retention-days: 14
+
+  api:
+    name: REST API
+    needs: image
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: read
+    container:
+      image: ${{ needs.image.outputs.image }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    env:
+      PW_WORKERS: 2
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Point at the image's dependencies
+        run: |
+          ln -s /suite/node_modules node_modules
+          mkdir -p .yarn && ln -s /suite/.yarn/install-state.gz .yarn/install-state.gz
+      - run: yarn test:api
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: results-api
+          path: |
+            allure-results/
             reports/
           retention-days: 14
 
   # ---------------------------------------------------------------------------
-  # The published reports. Only on main, and only once the suites have finished,
-  # whatever they finished as: a failing run is exactly the run whose report
-  # someone wants to read.
+  # The published site: an Allure report per suite and one across all of them,
+  # the traces, the suite health page and the run feed the portfolio replays.
+  #
+  # Only for main, and whatever the suites finished as, because a failing run
+  # is exactly the run whose report somebody wants. Not when a suite never
+  # started: then there is nothing new to show and the last report stays up.
   # ---------------------------------------------------------------------------
   publish:
     name: Publish reports
-    needs: [functional, webkit, visual]
-    if: ${{ always() && github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+    needs: [functional, webkit, visual, api]
+    if: >-
+      always()
+      && github.ref == 'refs/heads/main'
+      && github.event_name != 'pull_request'
+      && !contains(needs.*.result, 'skipped')
+      && !contains(needs.*.result, 'cancelled')
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: publish-reports
+      cancel-in-progress: false
     permissions:
-      contents: read
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 20
+          node-version: 24
 
-      - uses: actions/download-artifact@v4
+      # Allure 2 is a Java program.
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           pattern: results-*
           path: incoming
 
-      - name: Install the Allure command line
-        run: npm install -g allure-commandline@2.32.0
+      # The site currently published: trend history, the run history the feed
+      # appends to, and the number of the run it came from.
+      - name: Restore the published site
+        run: |
+          if git ls-remote --exit-code --heads origin gh-pages > /dev/null 2>&1; then
+            git fetch --depth=1 origin gh-pages
+            git worktree add --detach previous FETCH_HEAD
+          else
+            echo "No gh-pages branch yet: this run starts the history"
+            mkdir -p previous
+          fi
 
-      - name: Assemble the reports
+      # Two runs on main can finish out of order. The later commit's report
+      # must not be replaced by an earlier one's.
+      - name: Check this run is newer than the published one
+        id: order
+        run: |
+          published=$(node -p "try { require('./previous/feed/latest.json').run.number } catch { 0 }")
+          if [ "$published" -gt "$GITHUB_RUN_NUMBER" ]; then
+            echo "Run #$published is already published and is newer; leaving it in place"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Stage the results
+        if: steps.order.outputs.skip != 'true'
         run: |
           set -eu
-          mkdir -p site
+          site="https://${GITHUB_REPOSITORY_OWNER,,}.github.io/${GITHUB_REPOSITORY#*/}/"
+          run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          copy() { if [ -d "$1" ]; then cp -r "$1"/. "$2"/; fi; }
 
-          # One combined dashboard, and one per suite, because they answer
-          # different questions and a single report would bury the visual
-          # failures under twenty functional passes.
-          merge() {
-            local out="$1"; shift
-            local dir="build/$out"
-            mkdir -p "$dir"
-            for src in "$@"; do
-              [ -d "$src" ] && cp -r "$src"/. "$dir"/ || true
-            done
-            if [ -n "$(ls -A "$dir" 2>/dev/null)" ]; then
-              allure generate "$dir" --clean -o "site/$out"
-            else
-              mkdir -p "site/$out"
-              echo "<p>No results in this run.</p>" > "site/$out/index.html"
-            fi
+          for suite in combined functional visual api; do mkdir -p "results/$suite"; done
+          copy incoming/results-functional/allure-results results/functional
+          copy incoming/results-webkit/allure-results results/functional
+          copy incoming/results-visual/allure-results results/visual
+          copy incoming/results-api/allure-results results/api
+          for suite in functional visual api; do copy "results/$suite" results/combined; done
+
+          # Each report gets its failure categories, a link back to the run that
+          # produced it, and the trend history of the report it replaces.
+          stage() {
+            dir="results/$1"; name="$2"; path="$3"
+            cp env/allure/categories.json "$dir/categories.json"
+            printf '{"name":"GitHub Actions","type":"github","reportName":"%s","buildOrder":%s,"buildName":"CI #%s","buildUrl":"%s","reportUrl":"%s"}\n' \
+              "$name" "$GITHUB_RUN_NUMBER" "$GITHUB_RUN_NUMBER" "$run_url" "$site$path" > "$dir/executor.json"
+            if [ -d "previous/${path}history" ]; then cp -r "previous/${path}history" "$dir/history"; fi
           }
+          stage combined "Agentic Playwright Suite" ""
+          stage functional "Functional E2E" "functional/"
+          stage visual "Visual regression" "visual/"
+          stage api "REST API" "api/"
+          echo "SITE_URL=$site" >> "$GITHUB_ENV"
 
-          merge functional incoming/results-functional/allure-results incoming/results-webkit/allure-results
-          merge visual incoming/results-visual/allure-results
-          merge . incoming/results-functional/allure-results incoming/results-webkit/allure-results incoming/results-visual/allure-results
+      - name: Generate the site
+        if: steps.order.outputs.skip != 'true'
+        run: |
+          set -eu
+          allure() { npx --yes --package allure-commandline@2.46.1 allure "$@"; }
+          # The combined report first: --clean empties the directory it writes to.
+          allure generate results/combined --clean -o site
+          allure generate results/functional --clean -o site/functional
+          allure generate results/visual --clean -o site/visual
+          allure generate results/api --clean -o site/api
 
-          # The Playwright HTML report carries the traces, which is the only
-          # place a reviewer can replay a failure step by step.
+          # The Playwright report carries the traces, the only place a failure
+          # can be replayed step by step.
           if [ -d incoming/results-functional/playwright-report ]; then
             cp -r incoming/results-functional/playwright-report site/playwright-report
           fi
 
-      - name: Build the suite health page
-        run: node utils/scripts/suite-health.mjs --out site/metrics
+          node utils/scripts/suite-health.mjs --in incoming --out site/metrics
+          node utils/scripts/build-feed.mjs --in incoming --out site/feed \
+            --previous previous/feed/history.json --site "$SITE_URL"
+          touch site/.nojekyll
 
-      - uses: actions/configure-pages@v5
-        id: pages_url
-
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: site
-
-      - id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Publish to gh-pages
+        if: steps.order.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -eu
+          cd site
+          git init -q -b gh-pages
+          git add -A
+          git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -q -m "Publish the reports of run #$GITHUB_RUN_NUMBER (${GITHUB_SHA::7})"
+          git push -q --force "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
+          {
+            echo "### Published"
+            echo "Dashboard: $SITE_URL"
+            echo "Run feed: ${SITE_URL}feed/latest.json"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   # ---------------------------------------------------------------------------
-  # The gate.
-  #
-  # This is the only check branch protection requires. It reads the result of
-  # every other job, so a job that stops running cannot quietly stop being
-  # enforced: if someone deletes the visual job, this one fails on a missing
-  # result rather than passing on an absent one.
+  # The gate: one check that reads the result of every other job. A job that
+  # stops running fails this one on a missing result rather than passing on an
+  # absent one, so nothing can quietly stop being enforced.
   # ---------------------------------------------------------------------------
   ci-gate:
     name: ci-gate
-    needs: [image, static, functional, webkit, visual]
+    needs: [image, static, functional, webkit, visual, api]
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - name: Check every job succeeded
+      - name: Every job succeeded
         env:
           RESULTS: ${{ toJSON(needs) }}
         run: |
-          set -eu
           echo "$RESULTS"
-          failed=$(echo "$RESULTS" | grep -o '"result": *"[a-z]*"' | grep -v '"success"' || true)
-          if [ -n "$failed" ]; then
+          if echo "$RESULTS" | grep -o '"result": *"[a-z]*"' | grep -qv '"success"'; then
             echo "::error::one or more jobs did not succeed"
             exit 1
           fi
-          echo "all jobs succeeded"

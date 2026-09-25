@@ -1,23 +1,25 @@
 # Agentic Playwright Suite
 
-End to end and visual regression tests for [Automation Exercise](https://automationexercise.com),
-written in Playwright and TypeScript, authored and healed through Claude Code agents over Playwright
-MCP, and published from a containerised CI pipeline.
+End to end, visual regression and REST API tests for
+[Automation Exercise](https://automationexercise.com), written in Playwright and TypeScript, authored
+and healed through Claude Code agents over Playwright MCP, and published from a containerised CI
+pipeline.
 
-[![CI](https://github.com/artemcherbaev/agentic-playwright-suite/actions/workflows/ci.yml/badge.svg)](https://github.com/artemcherbaev/agentic-playwright-suite/actions/workflows/ci.yml)
+[![CI](https://github.com/ArtemCherbaev/agentic-playwright-suite/actions/workflows/ci.yml/badge.svg)](https://github.com/ArtemCherbaev/agentic-playwright-suite/actions/workflows/ci.yml)
 
-| Live                                                                                                                                                              |                                                                             |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| [Suite health](https://artemcherbaev.github.io/agentic-playwright-suite/metrics/)                                                                                 | Pass rate, flaky rate, p50 and p95, parked cases, against stated thresholds |
-| [Test results](https://artemcherbaev.github.io/agentic-playwright-suite/)                                                                                         | Both suites, Chromium and WebKit split under the functional one             |
-| [Functional](https://artemcherbaev.github.io/agentic-playwright-suite/functional/) and [visual](https://artemcherbaev.github.io/agentic-playwright-suite/visual/) | Each suite with its own trend                                               |
-| [Trace viewer](https://artemcherbaev.github.io/agentic-playwright-suite/playwright-report/)                                                                       | Every step of every case, replayable                                        |
+| Live                                                                                                                                                                                                                                    |                                                                                                                                                             |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Suite health](https://artemcherbaev.github.io/agentic-playwright-suite/metrics/)                                                                                                                                                       | Pass rate, flaky rate, p50 and p95, parked cases, against stated thresholds                                                                                 |
+| [Test results](https://artemcherbaev.github.io/agentic-playwright-suite/)                                                                                                                                                               | Every suite in one Allure report, Chromium and WebKit split under the functional one                                                                        |
+| [Functional](https://artemcherbaev.github.io/agentic-playwright-suite/functional/), [visual](https://artemcherbaev.github.io/agentic-playwright-suite/visual/) and [API](https://artemcherbaev.github.io/agentic-playwright-suite/api/) | Each suite with its own trend                                                                                                                               |
+| [Trace viewer](https://artemcherbaev.github.io/agentic-playwright-suite/playwright-report/)                                                                                                                                             | Every step of every functional case, replayable                                                                                                             |
+| [The last run, replayed](https://artemcherbaev.github.io/qa-suite.html)                                                                                                                                                                 | The portfolio page that replays the latest run lane by lane, from the [run feed](https://artemcherbaev.github.io/agentic-playwright-suite/feed/latest.json) |
 
-**20 functional cases and 20 visual cases, both capped.** The functional cases are replayed on
-WebKit, so the same coverage is proven on the engine behind Safari. Visual baselines stay Chromium on
-Linux, generated in the same image CI runs. New coverage replaces an existing case rather than
-growing the suite, because twenty cases that can each be justified demonstrate more than two hundred
-nobody can explain.
+**20 functional cases, 20 visual cases and 12 API cases, each suite capped.** The functional cases
+are replayed on WebKit, so the same coverage is proven on the engine behind Safari. Visual baselines
+stay Chromium on Linux, generated in the same image CI runs. The API cases run over HTTP with no
+browser. New coverage replaces an existing case rather than growing the suite, because twenty cases
+that can each be justified demonstrate more than two hundred nobody can explain.
 
 Built with Playwright, TypeScript, Yarn, Docker, Allure and GitHub Actions, with Claude Code agents
 reaching the browser over MCP.
@@ -33,6 +35,7 @@ corepack enable
 yarn install
 yarn playwright:install:chromium
 yarn test:e2e          # functional suite
+yarn test:api          # REST API suite, a few seconds, no browser
 yarn docker:vr         # visual suite, in the image CI uses
 ```
 
@@ -51,23 +54,23 @@ failure, including the expected, actual and diff images of a screenshot comparis
 
 ## What runs when
 
-| Trigger         | Runs                                                                  |
-| --------------- | --------------------------------------------------------------------- |
-| Pull request    | Static checks, functional suite, WebKit replay, visual suite          |
-| Push to `main`  | The same, then the dashboards and the suite health page are published |
-| Manual dispatch | Regenerate the visual baselines, verify them, upload them for review  |
+| Trigger                   | Runs                                                                                 |
+| ------------------------- | ------------------------------------------------------------------------------------ |
+| Pull request              | Static checks, functional suite, WebKit replay, visual suite, API suite              |
+| Push to `main`            | The same, then the reports, the suite health page and the run feed are published     |
+| `Update visual baselines` | Manual: regenerate the baselines in the CI image, verify they reproduce, commit them |
 
-Every job runs inside an image built by the first job, so browsers and dependencies install once
-rather than four times, and a local run uses that same image.
+Every job runs inside one execution image. Its tag is the Playwright release plus a hash of the
+lockfile and the Dockerfile, so a commit that only touches tests reuses the image the last one built,
+and a change of dependencies can never run against a stale one.
 
-`main` is protected and takes no direct pushes, including from its owner. Every change arrives
-through a pull request, and the only check the protection requires is `ci-gate`, a job that reads the
-result of all the others. A job that stops running therefore cannot quietly stop being enforced.
+`ci-gate` is a job that reads the result of all the others, and it is the one check a branch
+protection rule needs to require: a job that stops running fails the gate on a missing result rather
+than passing on an absent one, so nothing can quietly stop being enforced.
 
-The three test jobs run in parallel under a worker budget: one each for the functional and visual
-jobs, two for the WebKit job. The budget is a precaution rather than a measured limit — the shared
-host's capacity varies — and it costs nothing while removing the suite as a suspect when something
-times out.
+The four test jobs run in parallel under a worker budget: one for the visual job, two each for the
+others. The budget is a precaution rather than a measured limit — the shared host's capacity varies —
+and it costs nothing while removing the suite as a suspect when something times out.
 
 ## When a test goes flaky
 
@@ -92,8 +95,9 @@ investigation is in [`docs/decisions.md`](docs/decisions.md).
 ```
 tests/        20 functional cases, one directory per feature area
 vr-tests/     20 visual cases and their committed Linux baselines
+api-tests/    12 API cases over HTTP, and the fixture that owns their accounts
 specs/        Test plan and status report
-utils/        Page objects, fixtures, test data, the capture helper, scripts
+utils/        Page objects, the API client, fixtures, test data, the capture helper, scripts
 .claude/      Seven agents, three skills, four commands
 env/docker/   Execution image for CI and local use
 ```
@@ -125,7 +129,7 @@ scripts: `corepack yarn install`, `corepack yarn test:e2e`. Same Yarn, same lock
 | [`specs/TEST-PLAN.md`](specs/TEST-PLAN.md)     | Every case, why the suite is capped, and what is deliberately not covered  |
 | [`specs/STATUS.md`](specs/STATUS.md)           | Coverage per area, findings raised against the application, open decisions |
 | [`docs/architecture.md`](docs/architecture.md) | Page objects, fixtures, locator policy, visual regression, reporting       |
-| [`docs/pipeline.md`](docs/pipeline.md)         | The six jobs, the published reports, regenerating baselines                |
+| [`docs/pipeline.md`](docs/pipeline.md)         | The jobs, the published reports, the run feed, regenerating baselines      |
 | [`docs/agents.md`](docs/agents.md)             | The seven agents, the three skills, why investigation and repair are split |
 | [`docs/decisions.md`](docs/decisions.md)       | The calls a reviewer would question, and what broke while building this    |
 

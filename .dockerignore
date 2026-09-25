@@ -1,0 +1,10 @@
+node_modules
+.git
+.yarn/install-state.gz
+allure-results
+allure-report
+playwright-report
+test-results
+reports
+blob-report
+site

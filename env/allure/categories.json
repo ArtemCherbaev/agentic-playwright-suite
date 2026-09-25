@@ -1,0 +1,31 @@
+[
+  {
+    "name": "Visual difference",
+    "description": "A screenshot no longer matches its committed baseline. Open the diff before anything else.",
+    "matchedStatuses": ["failed"],
+    "messageRegex": "(?s).*(Screenshot comparison failed|toHaveScreenshot|pixels \\(ratio).*"
+  },
+  {
+    "name": "Target host unavailable",
+    "description": "The demo host refused, reset or timed out a connection. Check the other engine in the same run before touching a test.",
+    "matchedStatuses": ["failed", "broken"],
+    "messageRegex": "(?s).*(net::ERR_|ECONNRESET|ECONNREFUSED|ETIMEDOUT|ENOTFOUND|socket hang up|502 Bad Gateway|503 Service|504 Gateway).*"
+  },
+  {
+    "name": "Timed out",
+    "description": "A step or the case outlived its budget. Usually a locator that no longer matches, sometimes a slow host.",
+    "matchedStatuses": ["failed", "broken"],
+    "messageRegex": "(?s).*(Timeout \\d+ms exceeded|Test timeout of \\d+ms exceeded).*"
+  },
+  {
+    "name": "Assertion failed",
+    "description": "The application answered, and the answer was not the expected one.",
+    "matchedStatuses": ["failed"],
+    "messageRegex": "(?s).*expect\\(.*"
+  },
+  {
+    "name": "Parked on a known defect",
+    "description": "Cases parked with test.fixme(). Each names a defect recorded in specs/STATUS.md.",
+    "matchedStatuses": ["skipped"]
+  }
+]
