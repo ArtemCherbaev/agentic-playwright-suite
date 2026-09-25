@@ -44,7 +44,7 @@ export default tseslint.config(
   },
 
   {
-    files: ['tests/**/*.ts', 'vr-tests/**/*.ts'],
+    files: ['tests/**/*.ts', 'vr-tests/**/*.ts', 'api-tests/**/*.ts'],
     ...playwright.configs['flat/recommended'],
     rules: {
       ...playwright.configs['flat/recommended'].rules,

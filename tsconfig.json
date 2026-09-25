@@ -22,5 +22,12 @@
       "@utils/*": ["utils/*"]
     }
   },
-  "include": ["tests", "vr-tests", "utils", "playwright.config.ts", "eslint.config.mjs"]
+  "include": [
+    "tests",
+    "vr-tests",
+    "api-tests",
+    "utils",
+    "playwright.config.ts",
+    "eslint.config.mjs"
+  ]
 }

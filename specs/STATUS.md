@@ -13,9 +13,10 @@ Last verified: 2026-09-19, against `https://automationexercise.com`.
 | Catalogue        | TC-08 to TC-13        | VR-06 to VR-10 | Search matches category as well as name, see below      |
 | Cart             | TC-14 to TC-17, TC-20 | VR-11 to VR-14 | The largest share of the budget, and where the money is |
 | Contact, reviews | TC-18, TC-19          | VR-19, VR-20   |                                                         |
+| REST API         | API-01 to API-12      |                | HTTP only; three findings raised, AE-6 to AE-8          |
 
-20 functional cases and 20 visual cases, both capped. The functional cases are replayed on WebKit,
-so the same coverage is proven on the engine behind Safari.
+20 functional cases, 20 visual cases and 12 API cases, each suite capped. The functional cases are
+replayed on WebKit, so the same coverage is proven on the engine behind Safari.
 
 **Last full run:** functional 20/20 on Chromium, 20/20 on WebKit, 1 parked. Visual 20/20 on the
 reference platform.
@@ -94,6 +95,36 @@ Removing the widget by class worked for two of its shapes and not the one used h
 The empty cart is covered functionally by TC-16, which asserts the message rather than photographing
 it. VR-11 now captures the checkout control, which is the commercially important thing on the page
 and sits in a region the advertiser does not write into.
+
+### AE-6 The REST API answers HTTP 200 to everything, including its own refusals
+
+**Cases:** every API case, which assert the HTTP status and the body's `responseCode` together.
+
+A missing parameter, a wrong password, an unsupported verb and a deleted account all come back as
+`HTTP/1.1 200 OK`. The real outcome is only in the body: `{"responseCode": 405, "message": "This
+request method is not supported."}`. Observed on all fourteen documented endpoints, every run since
+the API suite was added.
+
+It matters beyond this suite: any client, proxy or monitor that trusts the status line records these
+failures as successes. The cases pin the 200 on purpose, so the day the API starts answering with
+real status codes they fail and say so, rather than quietly carrying on.
+
+### AE-7 JSON is served as `text/html`
+
+**Affects:** every API response.
+
+Every endpoint returns `Content-Type: text/html; charset=utf-8` with a JSON body. A client that
+negotiates on the content type refuses to parse it. The suite's client parses the text itself and
+fails with the body in the message if it is not JSON.
+
+### AE-8 The brand list has one row per product, not one per brand
+
+**Case:** API-03, which asserts the brands as a set.
+
+`GET /api/brandsList` returns 34 rows, ids 1 to 34, for 8 distinct brands: "Polo" appears six
+times. The row count happens to equal the product count. Whether that is the intended contract is
+not documented, so the case asserts what a consumer can rely on — every brand a product carries is
+listed — and records the row count as an annotation instead of asserting it.
 
 ## Open decisions
 

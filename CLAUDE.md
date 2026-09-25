@@ -1,9 +1,10 @@
 # Working in this repository
 
-End to end and visual regression tests for [Automation Exercise](https://automationexercise.com),
-in Playwright and TypeScript. The tests are authored and repaired through Claude Code agents working
-over Playwright MCP. **The pipeline itself runs no model.** A suite that needs a model at runtime is
-a suite whose result cannot be reproduced, and reproducibility is the only reason to trust it.
+End to end, visual regression and REST API tests for
+[Automation Exercise](https://automationexercise.com), in Playwright and TypeScript. The tests are
+authored and repaired through Claude Code agents working over Playwright MCP. **The pipeline itself
+runs no model.** A suite that needs a model at runtime is a suite whose result cannot be reproduced,
+and reproducibility is the only reason to trust it.
 
 ## Commands
 
@@ -12,9 +13,11 @@ yarn install                      # Yarn 4 through Corepack; run `corepack enabl
 yarn playwright:install:chromium  # Chromium only; CI adds WebKit
 yarn test:e2e                     # the functional suite, 20 cases
 yarn test:e2e:webkit              # the same cases on the engine behind Safari
+yarn test:api                     # the REST API suite, 12 cases, no browser
 yarn docker:vr                    # the visual suite, in the image CI uses
 yarn check                        # typecheck, lint, format check
 yarn metrics                      # regenerate the suite health page
+yarn feed                         # build the run feed from the JSON reports
 ```
 
 One case while developing it: `npx playwright test --grep "TC-12"`.
@@ -24,6 +27,7 @@ One case while developing it: `npx playwright test --grep "TC-12"`.
 ```
 tests/        20 functional cases, one directory per feature area
 vr-tests/     20 visual cases and their committed Linux baselines
+api-tests/    12 API cases over HTTP, with the fixture that owns their accounts
 utils/        Page objects, fixtures, test data, the capture helper, scripts
 specs/        The test plan and the status report
 docs/         Architecture, pipeline, agents, decisions

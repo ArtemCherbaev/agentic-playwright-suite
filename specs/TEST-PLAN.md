@@ -1,7 +1,7 @@
 # Test plan
 
-Twenty functional cases and twenty visual ones, both capped. New coverage replaces an existing case
-rather than growing the total.
+Twenty functional cases, twenty visual ones and twelve against the REST API, each suite capped. New
+coverage replaces an existing case rather than growing the total.
 
 ## Why a cap
 
@@ -75,13 +75,36 @@ and where the defects found so far have been.
 Each captures a component rather than a page. A full page screenshot fails on any change anywhere in
 it, so the report says "the page changed" and someone still has to go and find what.
 
+## API cases
+
+Twelve, over HTTP with Playwright's request client and no browser, so the whole suite runs in a few
+seconds. Capped the same way as the others.
+
+| ID     | Endpoint                     | Proves                                                             |
+| ------ | ---------------------------- | ------------------------------------------------------------------ |
+| API-01 | `GET productsList`           | The whole catalogue comes back, every product complete, ids unique |
+| API-02 | `POST productsList`          | An unsupported verb is refused, with 405 in the body               |
+| API-03 | `GET brandsList`             | Every brand a product carries is listed — see AE-8                 |
+| API-04 | `PUT brandsList`             | An unsupported verb is refused, with 405 in the body               |
+| API-05 | `POST searchProduct`         | A search narrows the catalogue and every result matches the term   |
+| API-06 | `POST searchProduct`         | A search without its parameter is refused, with 400 in the body    |
+| API-07 | `POST createAccount`         | An account created over the API can log in                         |
+| API-08 | `POST createAccount`         | The same email cannot register twice                               |
+| API-09 | `POST verifyLogin`           | A wrong password is refused without confirming the account exists  |
+| API-10 | `POST`, `DELETE verifyLogin` | A missing email is a 400, an unsupported verb a 405                |
+| API-11 | `PUT updateAccount`          | An update is visible in the account details straight away          |
+| API-12 | `DELETE deleteAccount`       | A deleted account can no longer log in or be looked up             |
+
+Every case asserts the HTTP status as well as the body's own `responseCode`, although the status is
+always 200 on this API (AE-6). Every account a case creates is deleted by the fixture that created
+it, pass or fail.
+
 ## What is deliberately not covered
 
-| Not covered                 | Why                                                                                                                      |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Checkout and payment        | Someone else's demo, no stable test account for it, and it would displace a cart case that has already caught something. |
-| The published API endpoints | A different layer with a different tool. Driving a browser to check a JSON contract is slow and fragile.                 |
-| Responsive breakpoints      | The target's layout is not the product being demonstrated here. Would be first on the list if it were.                   |
-| Accessibility               | Worth a suite of its own with its own tooling, not two cases bolted onto this one.                                       |
+| Not covered            | Why                                                                                                                      |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Checkout and payment   | Someone else's demo, no stable test account for it, and it would displace a cart case that has already caught something. |
+| Responsive breakpoints | The target's layout is not the product being demonstrated here. Would be first on the list if it were.                   |
+| Accessibility          | Worth a suite of its own with its own tooling, not two cases bolted onto this one.                                       |
 
 The gaps are as much a decision as the cases. Adding any of these means naming what comes out.

@@ -12,6 +12,7 @@
   "scripts": {
     "test:e2e": "playwright test --project=chromium",
     "test:e2e:webkit": "playwright test --project=webkit",
+    "test:api": "playwright test --project=api",
     "test:e2e:report": "playwright show-report",
     "test:vr": "playwright test --project=visual",
     "test:vr:update": "playwright test --project=visual --update-snapshots",
@@ -29,11 +30,12 @@
     "typecheck": "tsc --noEmit",
     "check": "yarn typecheck && yarn lint && yarn format:check",
     "playwright:install": "playwright install --with-deps chromium webkit",
-    "playwright:install:chromium": "playwright install --with-deps chromium"
+    "playwright:install:chromium": "playwright install --with-deps chromium",
+    "feed": "node utils/scripts/build-feed.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
-    "@playwright/test": "^1.49.0",
+    "@playwright/test": "1.63.0",
     "@types/node": "^22.10.0",
     "allure-playwright": "^3.0.0",
     "eslint": "^9.17.0",

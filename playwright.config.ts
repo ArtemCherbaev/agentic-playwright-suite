@@ -1,3 +1,4 @@
+import { platform, arch } from 'node:os';
 import { defineConfig, devices } from '@playwright/test';
 
 /**
@@ -6,6 +7,7 @@ import { defineConfig, devices } from '@playwright/test';
  *   chromium  the functional suite, the one that gates a merge
  *   webkit    the same twenty cases on the engine behind Safari
  *   visual    twenty screenshot comparisons against committed Linux baselines
+ *   api       the REST API, over HTTP, with no browser at all
  *
  * Retries are zero on purpose. A retry turns a flaky test into a green tick and
  * throws away the only run that had anything to say. If a case cannot pass on
@@ -43,7 +45,18 @@ export default defineConfig({
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
     ['junit', { outputFile: 'reports/junit/results.xml' }],
     ['json', { outputFile: 'reports/json/results.json' }],
-    ['allure-playwright', { resultsDir: 'allure-results', detail: true }],
+    [
+      'allure-playwright',
+      {
+        resultsDir: 'allure-results',
+        detail: true,
+        environmentInfo: {
+          'Base URL': BASE_URL,
+          Node: process.version,
+          OS: `${platform()} ${arch()}`,
+        },
+      },
+    ],
   ],
 
   use: {
@@ -63,6 +76,10 @@ export default defineConfig({
   },
 
   projects: [
+    {
+      name: 'api',
+      testDir: './api-tests',
+    },
     {
       name: 'chromium',
       testDir: './tests',
