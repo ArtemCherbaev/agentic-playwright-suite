@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+  # Daily as well: the target is someone else's live site, and it changes
+  # without telling anyone. A scheduled run notices that before the next push.
+  schedule:
+    - cron: '17 5 * * *'
 
 # A newer push to a pull request replaces its older run. On main every run
 # finishes, because every run on main is one somebody may want the report of.

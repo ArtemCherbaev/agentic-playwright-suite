@@ -133,6 +133,14 @@ scripts: `corepack yarn install`, `corepack yarn test:e2e`. Same Yarn, same lock
 | [`docs/agents.md`](docs/agents.md)             | The seven agents, the three skills, why investigation and repair are split |
 | [`docs/decisions.md`](docs/decisions.md)       | The calls a reviewer would question, and what broke while building this    |
 
+## Credits
+
+The shape of this project — agents that author and heal the tests, a containerised pipeline with no
+model in it, and a portfolio page that replays the published run — follows
+[ella79/agentic-playwright-suite](https://github.com/ella79/agentic-playwright-suite) (MIT), whose
+pipeline also showed the way to several CI details used here. The tests, page objects, findings and
+the run feed are this repository's own.
+
 ## Licence
 
 MIT. See [`LICENSE.md`](LICENSE.md).
