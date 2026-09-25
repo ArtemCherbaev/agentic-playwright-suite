@@ -126,6 +126,20 @@ times. The row count happens to equal the product count. Whether that is the int
 not documented, so the case asserts what a consumer can rely on — every brand a product carries is
 listed — and records the row count as an annotation instead of asserting it.
 
+### AE-9 The stylesheet imports its web fonts over plain http
+
+**Affects:** every page's typography; found through VR-17.
+
+`/static/css/main.css` opens with three `@import url(http://fonts.googleapis.com/css?...)` rules for
+Roboto, Open Sans and Abel. The site is served over https, so Chromium refuses all three as mixed
+content and logs it on every page load; visitors see the fallback typeface instead of the one the
+design names. Changing the three URLs to https would fix it.
+
+For the visual suite the consequence was worse than a wrong font: Roboto appeared only when a third
+party script loaded it first, so consecutive captures disagreed. The suite now refuses those third
+party text faces so baselines show what the application renders on its own. See
+`docs/decisions.md`.
+
 ## Open decisions
 
 | Question                                                          | Current position                                                                                                                                                      |

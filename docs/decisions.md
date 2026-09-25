@@ -86,6 +86,23 @@ drawn before the screenshot.
 The lesson went into the pipeline as well: the `update_baselines` job regenerates and then
 immediately re-runs, because a baseline that has not been shown to reproduce is not a baseline.
 
+## The fallback font was the application's real font
+
+The waits above were not the whole story. The first baseline run in CI regenerated all twenty captures
+and then failed its own verification on VR-17: the login form was photographed in Roboto for the
+baseline and in the fallback face a minute later, 1,633 pixels apart.
+
+The console had the answer. `main.css` imports Roboto, Open Sans and Abel from
+`http://fonts.googleapis.com`, and Chromium refuses all three as mixed content, so the application
+itself never renders those faces. Roboto only turned up when Google's advertising or consent scripts
+happened to load it into the page before the capture. No wait can make that deterministic, because the
+variable is not timing but whether a third party arrived.
+
+The visual project now refuses those third party text faces (`pinTypefaces` in `utils/visual.ts`),
+so every capture shows what the application renders on its own — which is also what a visitor on
+Chrome sees. Icon fonts the application loads itself over https are untouched. The mixed content is
+written up as AE-9.
+
 ## The footer could never be photographed
 
 Every capture of `#footer` timed out waiting for the element to be stable. Nothing was wrong with the

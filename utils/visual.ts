@@ -20,6 +20,27 @@ import type { Locator, Page } from '@playwright/test';
  *                 to load is a defect this suite should catch.
  */
 
+/**
+ * The text typefaces only third parties can deliver, refused for the visual suite.
+ *
+ * The application's stylesheet imports Roboto, Open Sans and Abel over plain
+ * http, and Chromium refuses those imports as mixed content (AE-9), so the
+ * application itself always renders its text in the fallback face. Roboto only
+ * appeared when Google's advertising or consent scripts happened to load it
+ * into the page before a capture. Two consecutive runs photographed the same
+ * login form in two typefaces, 1,633 pixels apart, and no amount of waiting
+ * could fix that: the difference was not timing but whether a third party
+ * turned up. Refusing those loads makes every capture show what the
+ * application renders on its own. Icon fonts are left alone: those the
+ * application loads itself, over https.
+ */
+const THIRD_PARTY_TEXT_FONTS =
+  /fonts\.(googleapis\.com\/css2?\?family=(Roboto|Open\+Sans|Abel|Google(\+|%20| )Sans)|gstatic\.com\/s\/(roboto|opensans|abel|googlesans)\/)/i;
+
+export async function pinTypefaces(page: Page): Promise<void> {
+  await page.route(THIRD_PARTY_TEXT_FONTS, (route) => route.abort());
+}
+
 /** Everything an advertiser controls, masked out of the comparison. */
 export function adMasks(page: Page): Locator[] {
   return [

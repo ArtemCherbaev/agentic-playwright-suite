@@ -6,6 +6,7 @@ import { CartPage } from '../pageObjects/CartPage.js';
 import { AuthPage } from '../pageObjects/AuthPage.js';
 import { ContactPage } from '../pageObjects/ContactPage.js';
 import { newUser, type NewUser } from '../testData.js';
+import { pinTypefaces } from '../visual.js';
 
 /**
  * The fixtures every case is written against.
@@ -31,7 +32,20 @@ interface Accounts {
   account: NewUser;
 }
 
-export const test = base.extend<Pages & Accounts>({
+interface Capture {
+  /** Visual project only: the typeface a capture is in is the application's own. */
+  pinnedTypefaces: void;
+}
+
+export const test = base.extend<Pages & Accounts & Capture>({
+  pinnedTypefaces: [
+    async ({ page }, use, testInfo) => {
+      if (testInfo.project.name === 'visual') await pinTypefaces(page);
+      await use();
+    },
+    { auto: true },
+  ],
+
   home: async ({ page }, use) => {
     await use(new HomePage(page));
   },
