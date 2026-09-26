@@ -1,0 +1,37 @@
+{
+  "metrics": {
+    "passRate": 100,
+    "flakyRate": 0,
+    "p50Duration": 2.332,
+    "p95Duration": 12.619,
+    "suiteDuration": 76.205541
+  },
+  "verdicts": {
+    "passRate": true,
+    "flakyRate": true,
+    "p95Duration": true,
+    "suiteDuration": true
+  },
+  "THRESHOLDS": {
+    "passRate": {
+      "min": 100,
+      "unit": "%",
+      "note": "every case, every run. A known failure is parked, not tolerated."
+    },
+    "flakyRate": {
+      "max": 1,
+      "unit": "%",
+      "note": "above this, no new coverage is added until it is back under."
+    },
+    "p95Duration": {
+      "max": 45,
+      "unit": "s",
+      "note": "a case slower than this is doing more than one thing."
+    },
+    "suiteDuration": {
+      "max": 300,
+      "unit": "s",
+      "note": "longer than five minutes and it stops being run before a push."
+    }
+  }
+}

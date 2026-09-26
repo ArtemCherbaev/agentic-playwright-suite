@@ -1,0 +1,56 @@
+{
+  "schema": "apw-history/1",
+  "runs": [
+    {
+      "number": 5,
+      "id": "36177586973",
+      "url": "https://github.com/ArtemCherbaev/agentic-playwright-suite/actions/runs/36177586973",
+      "commit": "adce5eb",
+      "startedAt": "2026-09-25T19:06:48.199Z",
+      "wallMs": 88814,
+      "conclusion": "passed",
+      "totals": {
+        "cases": 74,
+        "passed": 72,
+        "failed": 0,
+        "flaky": 0,
+        "skipped": 0,
+        "parked": 2
+      }
+    },
+    {
+      "number": 6,
+      "id": "36179029298",
+      "url": "https://github.com/ArtemCherbaev/agentic-playwright-suite/actions/runs/36179029298",
+      "commit": "1236a39",
+      "startedAt": "2026-09-25T19:20:50.490Z",
+      "wallMs": 56953,
+      "conclusion": "passed",
+      "totals": {
+        "cases": 74,
+        "passed": 72,
+        "failed": 0,
+        "flaky": 0,
+        "skipped": 0,
+        "parked": 2
+      }
+    },
+    {
+      "number": 7,
+      "id": "36234006506",
+      "url": "https://github.com/ArtemCherbaev/agentic-playwright-suite/actions/runs/36234006506",
+      "commit": "1236a39",
+      "startedAt": "2026-09-26T09:51:37.554Z",
+      "wallMs": 76206,
+      "conclusion": "passed",
+      "totals": {
+        "cases": 74,
+        "passed": 72,
+        "failed": 0,
+        "flaky": 0,
+        "skipped": 0,
+        "parked": 2
+      }
+    }
+  ]
+}
