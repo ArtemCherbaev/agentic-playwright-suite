@@ -64,6 +64,8 @@ point of it: the failures it produces are the failures a real pipeline produces.
 - Worker counts are capped. Three test jobs hit one host in parallel on `main`.
 - When the whole suite fails at the same step, look at the other engine in that run before editing
   anything. If WebKit passed the same twenty cases, the host was overloaded, not the suite.
+- A failure with a second error reading "automationexercise.com was unavailable during this case"
+  happened while the host answered 5xx. That is the host, not the suite: nothing to repair.
 
 ## Before handing work back
 

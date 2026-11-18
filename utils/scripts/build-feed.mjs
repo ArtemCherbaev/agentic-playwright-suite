@@ -130,6 +130,8 @@ function lanesFrom(json) {
           const started = Date.parse(last?.startTime ?? '');
           const match = CASE_ID.exec(spec.title);
           const fixme = (test.annotations ?? []).find((a) => a.type === 'fixme');
+          // Set by utils/outage.ts when a case failed while the host answered 5xx.
+          const hostDown = (test.annotations ?? []).find((a) => a.type === 'host-unavailable');
           lanes.get(project).cases.push({
             id: match ? match[1] : null,
             title: match ? spec.title.slice(match[0].length) : spec.title,
@@ -146,6 +148,7 @@ function lanesFrom(json) {
               ? { error: headline(last?.errors?.[0]?.message ?? last?.error?.message) }
               : {}),
             ...(fixme?.description ? { note: fixme.description } : {}),
+            ...(hostDown?.description ? { note: `host unavailable: ${hostDown.description}` } : {}),
           });
         }
       }

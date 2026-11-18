@@ -236,10 +236,13 @@ const html = `<!doctype html>
           ...failed,
           ...broken,
         ]
-          .map(
-            (c) =>
-              `<tr><td>${escape(c.title)}</td><td class="num">${escape(c.project)}</td><td class="status-failed">${escape(c.status)}</td></tr>`,
-          )
+          .map((c) => {
+            // A failure while the host answered 5xx still counts against the
+            // pass rate; it is labelled so nobody opens the suite to fix it.
+            const hostDown = c.annotations.find((a) => a.type === 'host-unavailable');
+            const status = hostDown ? `${c.status}, host unavailable` : c.status;
+            return `<tr><td>${escape(c.title)}</td><td class="num">${escape(c.project)}</td><td class="status-failed">${escape(status)}</td></tr>`;
+          })
           .join('')}</tbody></table>`
   }
 
