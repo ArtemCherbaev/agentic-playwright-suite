@@ -137,6 +137,26 @@ it: it failed with and without the animation freeze, and with and without the co
 Parked with `test.fixme()` rather than repaired, because every repair available would assert
 something weaker than "the button works". Written up as AE-1.
 
+## A host outage looked like two WebKit defects
+
+The scheduled run on 18 November failed TC-07 and TC-16 on WebKit, and on its re-run failed TC-07
+again with a different error. None of the three was the suite. The traces held the host's error
+pages: a Cloudflare 520 where the signup should have redirected, a 503 "under heavy load (queue
+full)" answer to `/add_to_cart/1`, so the cart modal never opened, and the same 503 page where
+`/login` should have loaded. The errors in the log were a missing "Logged in as", a hidden modal and
+a navigation timeout, and none of them mentioned the host.
+
+Retrying would have hidden it, and the policy rules that out anyway. What was missing was the
+evidence, so every case now records the 5xx answers the host gives it (`utils/outage.ts`, an auto
+fixture). When a case fails and the host answered 5xx, the case gets a `host-unavailable`
+annotation, a JSON attachment of the requests, and a second error naming them, which the CI log
+prints beside the original. The run feed and the suite health page carry the same label. The case
+still fails and still counts against the pass rate, because the run did not show the application
+working. The label only stops anyone from opening the suite to fix it.
+
+The API suite needs none of this: its client already fails with the status and the body of any
+answer that is not JSON, which is how the 503 page shows up there.
+
 ## CSP caught a class of bug in the portfolio's sibling repository
 
 Worth recording because it is the same lesson: the smoke suite in the portfolio repository asserts an

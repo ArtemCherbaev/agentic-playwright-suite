@@ -7,6 +7,7 @@ import { AuthPage } from '../pageObjects/AuthPage.js';
 import { ContactPage } from '../pageObjects/ContactPage.js';
 import { newUser, type NewUser } from '../testData.js';
 import { pinTypefaces } from '../visual.js';
+import { HostOutageRecorder } from '../outage.js';
 
 /**
  * The fixtures every case is written against.
@@ -35,9 +36,24 @@ interface Accounts {
 interface Capture {
   /** Visual project only: the typeface a capture is in is the application's own. */
   pinnedTypefaces: void;
+  /** Every case: a failure while the host answered 5xx is labelled as such. */
+  hostOutage: void;
 }
 
 export const test = base.extend<Pages & Accounts & Capture>({
+  // Auto, and depending only on the context, so it is set up before the account
+  // fixture registers and torn down after it deletes: a host that is down during
+  // either is caught as well as one that is down during the case itself.
+  hostOutage: [
+    async ({ context, baseURL }, use, testInfo) => {
+      const recorder = new HostOutageRecorder(context, new URL(baseURL!).hostname);
+      await use();
+      const outage = await recorder.verdict(testInfo);
+      if (outage) throw outage;
+    },
+    { auto: true },
+  ],
+
   pinnedTypefaces: [
     async ({ page }, use, testInfo) => {
       if (testInfo.project.name === 'visual') await pinTypefaces(page);

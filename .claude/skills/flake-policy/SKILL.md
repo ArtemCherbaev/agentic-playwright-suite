@@ -32,7 +32,9 @@ away the only run that had anything to say.
    - `application changed` — update the suite to the new truth.
    - `test raced the UI` — wait for the component's own signal, never a duration.
    - `state left behind` — fix the fixture, not the case.
-   - `third party noise` — say what, with evidence.
+   - `third party noise` — say what, with evidence. A failure that carries a `host-unavailable`
+     annotation (from `utils/outage.ts`) already has its evidence: the target answered 5xx during the
+     case. Do not edit the suite for it; read the requests it names and re-run once the host is back.
    - `application is broken` — **do not repair**. Park with `test.fixme()` naming the defect, and
      write it up in `specs/STATUS.md`.
 
