@@ -1,0 +1,1 @@
+{"total":2,"items":[{"uid":"21cb6aa0f9e62120159ef5fe7e2e89af","name":"Assertion failed","statistic":{"failed":5,"broken":0,"skipped":0,"passed":0,"unknown":0,"total":5}},{"uid":"093bf6cbe169eca9c81c9a4ed8d298f5","name":"Visual difference","statistic":{"failed":1,"broken":0,"skipped":0,"passed":0,"unknown":0,"total":1}}]}

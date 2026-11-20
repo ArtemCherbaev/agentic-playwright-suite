@@ -1,0 +1,57 @@
+[
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/get_product_picture/33"
+  },
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/get_product_picture/40"
+  },
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/get_product_picture/1"
+  },
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/get_product_picture/2"
+  },
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/get_product_picture/3"
+  },
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/get_product_picture/43"
+  },
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/get_product_picture/13"
+  },
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/get_product_picture/31"
+  },
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/get_product_picture/4"
+  },
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/get_product_picture/7"
+  },
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/products?search=top"
+  }
+]

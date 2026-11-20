@@ -1,0 +1,4 @@
+could not delete suite.4af96dc6@example.invalid: locator.click: Timeout 15000ms exceeded.
+Call log:
+  - waiting for getByRole('link', { name: 'Delete Account' })
+

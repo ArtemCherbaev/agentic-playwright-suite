@@ -1,0 +1,12 @@
+[
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/add_to_cart/1?quantity=1"
+  },
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/get_product_picture/1"
+  }
+]

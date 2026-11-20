@@ -1,0 +1,117 @@
+[
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/get_product_picture/1"
+  },
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/get_product_picture/4"
+  },
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/get_product_picture/28"
+  },
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/get_product_picture/16"
+  },
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/get_product_picture/33"
+  },
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/get_product_picture/31"
+  },
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/get_product_picture/38"
+  },
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/get_product_picture/43"
+  },
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/get_product_picture/41"
+  },
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/get_product_picture/11"
+  },
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/get_product_picture/7"
+  },
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/get_product_picture/19"
+  },
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/get_product_picture/6"
+  },
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/get_product_picture/39"
+  },
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/get_product_picture/29"
+  },
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/get_product_picture/15"
+  },
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/get_product_picture/20"
+  },
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/get_product_picture/35"
+  },
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/get_product_picture/42"
+  },
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/get_product_picture/30"
+  },
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/get_product_picture/2"
+  },
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/get_product_picture/40"
+  },
+  {
+    "status": 503,
+    "method": "GET",
+    "path": "/"
+  }
+]
